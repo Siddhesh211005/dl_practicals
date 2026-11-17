@@ -1,0 +1,42 @@
+import tensorflow as tf
+from tensorflow import keras
+
+(x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+
+x_train = tf.image.resize(x_train[:5000], (96, 96))
+x_test = tf.image.resize(x_test[:1000], (96, 96))
+
+y_train = y_train[:5000]
+y_test = y_test[:1000]
+
+base_model = keras.applications.MobileNetV2(
+    weights='imagenet',
+    include_top=False,
+    input_shape=(96, 96, 3)
+)
+
+#freeze lower layers
+base_model.trainable = False
+
+#add custom classifier
+model = keras.Sequential([
+    base_model,
+    keras.layers.GlobalAveragePooling2D(),
+    keras.layers.Dense(10, activation='softmax')
+])
+
+model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+model.fit(
+    x_train, y_train,
+    epochs=3,
+    batch_size=32
+)
+
+loss, accuracy = model.evaluate(x_test, y_test)
+
+print("Test Accuracy:", accuracy)

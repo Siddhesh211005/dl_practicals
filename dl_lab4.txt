@@ -1,0 +1,41 @@
+import tensorflow as tf
+from tensorflow import keras
+import numpy as np
+
+(x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+
+x_train = x_train / 255.0
+x_test = x_test / 255.0
+
+x_train = x_train[y_train == 0]
+x_test_normal = x_test[y_test == 0]
+x_test_anomaly = x_test[y_test != 0]
+
+model = keras.Sequential([
+    keras.layers.Flatten(input_shape=(28, 28)),
+    keras.layers.Dense(64, activation='relu'),
+    keras.layers.Dense(32, activation='relu'),
+    keras.layers.Dense(64, activation='relu'),
+    keras.layers.Dense(784, activation='sigmoid'),
+    keras.layers.Reshape((28, 28))
+])
+
+model.compile(
+    optimizer='adam',
+    loss='mse'
+)
+
+model.fit(
+    x_train, x_train,
+    epochs=5,
+    batch_size=128
+)
+
+normal = model.predict(x_test_normal[:5])
+anomaly = model.predict(x_test_anomaly[:5])
+
+normal_error = np.mean((x_test_normal[:5] - normal)**2)
+anomaly_error = np.mean((x_test_anomaly[:5] - anomaly)**2)
+
+print("Normal Error:", normal_error)
+print("Anomaly Error:", anomaly_error)
